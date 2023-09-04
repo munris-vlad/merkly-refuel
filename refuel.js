@@ -175,7 +175,7 @@ async function refuel(privateKey, network, sum) {
 
         const signedTx = await wallet.signTransaction(tx)
         const txResponse = await provider.sendTransaction(signedTx)
-        console.log(`${address}:  ${ txResponse.hash }`)
+        console.log(`${address}: SUCCESS ${ txResponse.hash }`)
     } catch (e) {
         console.log(`${address}: [ERROR] ${ e.toString() }`)
     }
@@ -198,7 +198,7 @@ for (let privateKey of privateKeys) {
     console.log(`Топ баланс в сети ${topNetwork}: $${topBalance.toFixed(2)}`)
 
     if ((topBalance * 0.9) < sum) {
-        console.log(`Топ баланса недостаточно для refuel, пропускаем`)
+        console.log(`Топ баланса недостаточно для refuel, пропускаем...`)
         continue
     }
 
