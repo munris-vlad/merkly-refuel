@@ -16,32 +16,43 @@ import {
     optimismContractAddress,
     arbitrumNetworkId,
     polygonNetworkId,
-    optimismNetworkId
+    optimismNetworkId,
+    shuffle
 } from './common.js'
 import * as ethers from "ethers"
 import axios from "axios"
 
+// CONFIG START
+const isShuffleWallets = true
+const waitFrom = 30
+const waitTo = 100
+const txCountFrom = 2
+const txCountTo = 3
+// CONFIG END
+
 const args = process.argv.slice(2)
 let sourceNetworks = ['polygon', 'arbitrum', 'optimism']
 let destinationNetwork = 'zora'
-let sum = 1;
+let sum = 1
 let sumFrom = null, sumTo = null
 let isRandom = false
 let destChainId = 195
 
 if (args[0]) {
-   sum = args[0];
+   sum = args[0]
    if (sum.includes('-')) {
        [sumFrom, sumTo] = sum.split('-')
        isRandom = true
    }
 }
 
-if (args.length > 1) {
+if (args.length >= 2) {
     sourceNetworks = args[1].split(',')
-    if (args[2]) {
-        destinationNetwork = args[2]
-    }
+}
+
+if (args.length == 3) {
+    destChainId = 212
+    destinationNetwork = 'Conflux'
 }
 
 
@@ -130,7 +141,7 @@ async function refuel(privateKey, network, sum) {
             provider = arbitrumProvider
             contractAddress = arbitrumContractAddress
             networkId = arbitrumNetworkId
-            gasLimit = 1200000
+            gasLimit = 1700000
             feeData = await provider.getFeeData()
             maxFeePerGas = 105000000
             maxPriorityFeePerGas = 10000000
@@ -175,13 +186,28 @@ async function refuel(privateKey, network, sum) {
 
         const signedTx = await wallet.signTransaction(tx)
         const txResponse = await provider.sendTransaction(signedTx)
-        console.log(`${address}: SUCCESS ${ txResponse.hash }`)
+
+        switch (network) {
+            case "polygon":
+                console.log(`${address}: Success https://polygonscan.com/tx/${ txResponse.hash }`)
+                break
+            case "optimism":
+                console.log(`${address}: Success https://optimistic.etherscan.io/tx/${ txResponse.hash }`)
+                break
+            case "arbitrum":
+                console.log(`${address}: Success https://arbiscan.io/tx/${ txResponse.hash }`)
+                break
+        }
     } catch (e) {
-        console.log(`${address}: [ERROR] ${ e.toString() }`)
+        console.error(`${address}: Error ${ e.toString() }`)
     }
 }
 
-const privateKeys = readWallets('private_keys.txt');
+const privateKeys = readWallets('private_keys.txt')
+
+if (isShuffleWallets) {
+    shuffle(privateKeys)
+}
 
 for (let privateKey of privateKeys) {
     const wallet = new ethers.Wallet(privateKey, polygonProvider)
@@ -194,15 +220,22 @@ for (let privateKey of privateKeys) {
 
     let {topNetwork, topBalance} = await defineSourceNetwork(address)
 
-    console.log(`Сумма для Refuel - $${sum}`)
-    console.log(`Топ баланс в сети ${topNetwork}: $${topBalance.toFixed(2)}`)
+    // console.log(`Сумма для Refuel - $${sum}`)
+    // console.log(`Топ баланс в сети ${topNetwork}: $${topBalance.toFixed(2)}`)
 
     if ((topBalance * 0.9) < sum) {
         console.log(`Топ баланса недостаточно для refuel, пропускаем...`)
         continue
     }
 
-    await refuel(privateKey, topNetwork, sum)
+    const randomCount = random(txCountFrom, txCountTo)
 
-    await sleep(random(30, 100) * 1000)
+    for (let i = 1; i <= randomCount; i++) {
+        console.log(`${address}: Транзакция ${i}/${randomCount}`)
+        const sleepTime = random(waitFrom, waitTo)
+        await refuel(privateKey, topNetwork, sum)
+        console.log(`${address}: Ждем ${sleepTime} сек`)
+        await sleep(sleepTime * 1000)
+    }
+
 }

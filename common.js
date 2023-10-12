@@ -51,3 +51,14 @@ export function writeLineToFile(filePath, line) {
 export function getUsdValue(value, usdPrice) {
     return (parseInt(value) / Math.pow(10, 18)) * usdPrice
 }
+
+export function shuffle(array) {
+    let currentIndex = array.length,  randomIndex
+    while (currentIndex > 0) {
+        randomIndex = Math.floor(Math.random() * currentIndex);
+        currentIndex--;
+        [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]]
+    }
+
+    return array
+}
