@@ -133,8 +133,8 @@ async function refuel(privateKey, network, sum) {
             networkId = optimismNetworkId
             gasLimit = 400000
             feeData = await provider.getFeeData()
-            maxFeePerGas = 185
-            maxPriorityFeePerGas = 20
+            maxFeePerGas = 215
+            maxPriorityFeePerGas = 25
             break
         case "arbitrum":
             wallet = new ethers.Wallet(privateKey, arbitrumProvider)
